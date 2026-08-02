@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../components/AuthProvider';
 import { Navigate } from 'react-router-dom';
-import { Package } from 'lucide-react';
+import { Package, Eye, EyeOff } from 'lucide-react';
 import { auth, db } from '../lib/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
@@ -12,6 +12,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   if (user) {
     return <Navigate to="/" replace />;
@@ -98,13 +99,22 @@ export default function Login() {
           </div>
           <div>
             <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Şifre</label>
-            <input 
-              required 
-              type="password" 
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              className="w-full p-4 rounded-2xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none font-medium" 
-            />
+            <div className="relative">
+              <input 
+                required 
+                type={showPassword ? "text" : "password"} 
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="w-full p-4 pr-12 rounded-2xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none font-medium" 
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1 cursor-pointer"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
           </div>
           <button
             type="submit"

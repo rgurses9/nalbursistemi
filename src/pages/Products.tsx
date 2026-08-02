@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { collection, query, getDocs, addDoc, updateDoc, deleteDoc, doc, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Product } from '../types';
-import { Plus, Edit2, Trash2, Search, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, X, Upload, Image as ImageIcon } from 'lucide-react';
 
 export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -23,6 +23,67 @@ export default function Products() {
   });
 
   const [aiLoading, setAiLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [showUrlInput, setShowUrlInput] = useState(false);
+
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve(event.target?.result as string);
+            return;
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          resolve(dataUrl);
+        };
+        img.onerror = (err) => reject(err);
+      };
+      reader.onerror = (err) => reject(err);
+    });
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const base64 = await compressImage(file);
+      setFormData(prev => ({ ...prev, imageUrl: base64 }));
+    } catch (err) {
+      console.error(err);
+      alert('Görsel işlenirken bir hata oluştu.');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -269,7 +330,18 @@ export default function Products() {
                 filteredProducts.map(product => (
                   <tr key={product.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                     <td className="py-4 text-gray-400 font-mono text-xs">{product.sku}</td>
-                    <td className="py-4 font-bold text-gray-900 text-base">{product.name}</td>
+                    <td className="py-4 font-bold text-gray-900 text-base">
+                      <div className="flex items-center gap-3">
+                        {product.imageUrl ? (
+                          <img src={product.imageUrl} alt={product.name} className="w-10 h-10 rounded-lg object-contain bg-gray-50 border border-gray-100 flex-shrink-0" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-gray-100 border border-gray-100 flex items-center justify-center text-gray-400 flex-shrink-0">
+                            <ImageIcon className="w-5 h-5" />
+                          </div>
+                        )}
+                        <span>{product.name}</span>
+                      </div>
+                    </td>
                     <td className="py-4 text-gray-500">{product.category}</td>
                     <td className="py-4 font-black text-gray-900">₺{product.price.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
                     <td className="py-4">
@@ -328,7 +400,7 @@ export default function Products() {
                   <input required type="text" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} placeholder={aiLoading ? "Yapay zeka kategoriyi buluyor..." : "Kategori girin"} className="w-full p-3.5 rounded-2xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none font-medium" />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6">
                 <div>
                   <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Birim</label>
                   <select value={formData.unit} onChange={e => setFormData({...formData, unit: e.target.value})} className="w-full p-3.5 rounded-2xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none font-medium bg-white">
@@ -338,9 +410,68 @@ export default function Products() {
                     <option value="Litre">Litre</option>
                   </select>
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Görsel URL (İsteğe Bağlı)</label>
-                  <input type="url" value={formData.imageUrl} onChange={e => setFormData({...formData, imageUrl: e.target.value})} className="w-full p-3.5 rounded-2xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none font-medium" placeholder="https://..." />
+
+                <div className="border border-gray-100 p-4 rounded-2xl bg-gray-50/50 space-y-3">
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">Ürün Görseli</label>
+                  
+                  {formData.imageUrl ? (
+                    <div className="relative w-32 h-32 mx-auto border border-gray-200 rounded-2xl overflow-hidden group shadow-sm bg-white">
+                      <img src={formData.imageUrl} alt="Ürün önizleme" className="w-full h-full object-contain" />
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, imageUrl: '' }))}
+                        className="absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity font-bold text-xs"
+                      >
+                        Kaldır
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <label className="border-2 border-dashed border-gray-300 hover:border-blue-500 rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition-all bg-white hover:bg-blue-50/10 min-h-[110px]">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileChange}
+                          className="hidden"
+                        />
+                        <Upload className="w-6 h-6 text-gray-400 mb-2" />
+                        <span className="text-xs font-bold text-gray-600">
+                          {uploading ? 'Yükleniyor...' : 'Görsel Seç / Çek'}
+                        </span>
+                        <span className="text-[10px] text-gray-400 mt-1">Cihazdan veya kameradan</span>
+                      </label>
+
+                      <div className="flex flex-col justify-center">
+                        {!showUrlInput ? (
+                          <button
+                            type="button"
+                            onClick={() => setShowUrlInput(true)}
+                            className="text-xs text-blue-600 hover:text-blue-700 font-bold flex items-center gap-1.5 justify-center py-3 border border-gray-200 rounded-2xl bg-white hover:bg-gray-50 transition-colors cursor-pointer"
+                          >
+                            <ImageIcon className="w-4 h-4" />
+                            URL ile Ekle
+                          </button>
+                        ) : (
+                          <div className="space-y-2">
+                            <input
+                              type="url"
+                              value={formData.imageUrl}
+                              onChange={e => setFormData({ ...formData, imageUrl: e.target.value })}
+                              placeholder="Görsel URL'si yapıştırın..."
+                              className="w-full p-2.5 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none text-xs"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowUrlInput(false)}
+                              className="text-[10px] text-gray-400 hover:text-gray-600 font-bold block mx-auto cursor-pointer"
+                            >
+                              Görsel yüklemeye dön
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-6">
