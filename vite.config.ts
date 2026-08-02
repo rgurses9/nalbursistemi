@@ -18,7 +18,11 @@ export default defineConfig(() => {
           name: 'Demirkıranlar Nalbur',
           short_name: 'Nalbur',
           description: 'Nalbur Envanter ve Satış Sistemi',
-          theme_color: '#ffffff',
+          theme_color: '#2563eb',
+          background_color: '#f9fafb',
+          display: 'standalone',
+          orientation: 'any',
+          start_url: '/',
           icons: [
             {
               src: 'pwa-192x192.png',
@@ -28,7 +32,8 @@ export default defineConfig(() => {
             {
               src: 'pwa-512x512.png',
               sizes: '512x512',
-              type: 'image/png'
+              type: 'image/png',
+              purpose: 'any maskable'
             }
           ]
         }

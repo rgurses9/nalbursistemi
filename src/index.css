@@ -1,1 +1,42 @@
 @import "tailwindcss";
+
+/* ── PWA & Mobile Globals ── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  height: 100%;
+  height: -webkit-fill-available;
+}
+
+body {
+  min-height: 100%;
+  min-height: -webkit-fill-available;
+  overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;          /* Prevent text selection on tap */
+}
+
+/* Allow text selection inside inputs & tables */
+input, textarea, [contenteditable], table, td, th {
+  user-select: text;
+}
+
+/* Smooth scrolling inside scroll containers */
+.overflow-auto,
+.overflow-y-auto,
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Landscape safe-area & compact nav ── */
+@media (orientation: landscape) and (max-height: 500px) {
+  /* Shrink the bottom nav text on very small landscape viewports */
+  nav .text-\[10px\] {
+    font-size: 8px;
+  }
+}
