@@ -26,7 +26,7 @@ export default function Products() {
 
   const [aiLoading, setAiLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [showUrlInput, setShowUrlInput] = useState(false);
+
 
   const compressImage = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -101,9 +101,6 @@ export default function Products() {
   };
 
   const [lastCategorizedName, setLastCategorizedName] = useState('');
-  const [productLink, setProductLink] = useState('');
-  const [linkLoading, setLinkLoading] = useState(false);
-  const [linkError, setLinkError] = useState('');
 
   const handleAutoCategorize = async (nameOverride?: string) => {
     const nameToCategorize = typeof nameOverride === 'string' ? nameOverride : formData.name;
@@ -124,37 +121,6 @@ export default function Products() {
       console.error(err);
     } finally {
       setAiLoading(false);
-    }
-  };
-
-  const handleFetchFromLink = async () => {
-    if (!productLink) return;
-    setLinkLoading(true);
-    setLinkError('');
-    try {
-      const res = await fetch('/api/extract-url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: productLink })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setLinkError(data.error || 'Bağlantı hatası oluştu.');
-        return;
-      }
-      if (data.name) {
-        setFormData(prev => ({ ...prev, name: data.name, imageUrl: data.imageUrl || prev.imageUrl }));
-        handleAutoCategorize(data.name);
-        setShowUrlInput(false);
-        setProductLink('');
-      } else {
-        setLinkError('Ürün bilgisi alınamadı. Sayfanın erişime açık olduğundan emin olun.');
-      }
-    } catch (err) {
-      console.error(err);
-      setLinkError('Bağlantı kurulamadı. Lütfen tekrar deneyin.');
-    } finally {
-      setLinkLoading(false);
     }
   };
 
@@ -393,32 +359,7 @@ export default function Products() {
               <button onClick={handleCloseModal} className="text-gray-400 hover:text-gray-900 transition-colors p-2 hover:bg-gray-100 rounded-full"><X className="w-6 h-6"/></button>
             </div>
             <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
-              {!editingProduct && (
-                <div className="space-y-2">
-                  <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 flex gap-2 items-center">
-                    <input
-                      type="url"
-                      value={productLink}
-                      onChange={e => { setProductLink(e.target.value); setLinkError(''); }}
-                      placeholder="Ürün linki yapıştırın (Otomatik doldurmak için)"
-                      className="flex-1 p-3 rounded-xl border border-blue-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none text-sm bg-white"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleFetchFromLink}
-                      disabled={linkLoading || !productLink}
-                      className="bg-blue-600 text-white px-4 py-3 rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 whitespace-nowrap flex items-center gap-1"
-                    >
-                      {linkLoading ? (
-                        <><span className="animate-spin inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full"></span> Çekiliyor...</>
-                      ) : 'Linkten Çek'}
-                    </button>
-                  </div>
-                  {linkError && (
-                    <p className="text-xs text-red-600 font-medium px-1">{linkError}</p>
-                  )}
-                </div>
-              )}
+
               <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Ürün Adı</label>
                 <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} onBlur={() => handleAutoCategorize()} className="w-full p-3.5 rounded-2xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none font-medium" />
@@ -476,36 +417,6 @@ export default function Products() {
                         </span>
                         <span className="text-[10px] text-gray-400 mt-1">Cihazdan veya kameradan</span>
                       </label>
-
-                      <div className="flex flex-col justify-center">
-                        {!showUrlInput ? (
-                          <button
-                            type="button"
-                            onClick={() => setShowUrlInput(true)}
-                            className="text-xs text-blue-600 hover:text-blue-700 font-bold flex items-center gap-1.5 justify-center py-3 border border-gray-200 rounded-2xl bg-white hover:bg-gray-50 transition-colors cursor-pointer"
-                          >
-                            <ImageIcon className="w-4 h-4" />
-                            URL ile Ekle
-                          </button>
-                        ) : (
-                          <div className="space-y-2">
-                            <input
-                              type="url"
-                              value={formData.imageUrl}
-                              onChange={e => setFormData({ ...formData, imageUrl: e.target.value })}
-                              placeholder="Görsel URL'si yapıştırın..."
-                              className="w-full p-2.5 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none text-xs"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowUrlInput(false)}
-                              className="text-[10px] text-gray-400 hover:text-gray-600 font-bold block mx-auto cursor-pointer"
-                            >
-                              Görsel yüklemeye dön
-                            </button>
-                          </div>
-                        )}
-                      </div>
                     </div>
                   )}
                 </div>
