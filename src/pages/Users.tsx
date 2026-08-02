@@ -63,7 +63,11 @@ export default function UserManagement() {
       fetchUsers();
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Kullanıcı oluşturulurken bir hata oluştu.');
+      if (err.code === 'auth/email-already-in-use') {
+        setError('Bu kullanıcı adı sistemde zaten kayıtlı (daha önce silinmiş bile olsa). Lütfen sonuna rakam ekleyerek farklı bir kullanıcı adı belirleyin (örn: ahmet2).');
+      } else {
+        setError(err.message || 'Kullanıcı oluşturulurken bir hata oluştu.');
+      }
     } finally {
       setCreating(false);
     }
@@ -75,11 +79,19 @@ export default function UserManagement() {
         <h1 className="text-3xl font-bold text-gray-900">Kullanıcı Yönetimi</h1>
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-2xl flex items-center gap-2 transition-colors font-bold shadow-lg shadow-blue-200"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-2xl flex items-center gap-2 transition-colors font-bold shadow-lg shadow-blue-200 shrink-0"
         >
           <Plus className="w-5 h-5" />
           YENİ KULLANICI
         </button>
+      </div>
+
+      <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex gap-3 text-blue-800 text-sm">
+        <Shield className="w-5 h-5 shrink-0 text-blue-600" />
+        <div>
+          <p className="font-bold mb-1">Şifre Değiştirme İşlemi</p>
+          <p>Güvenlik kuralları gereği mevcut personelin şifresini doğrudan değiştiremezsiniz. Şifresini unutan bir personelin şifresini yenilemek için: Önce <strong>SİL</strong> butonuna basarak yetkisini kaldırın, ardından aynı bilgilerle <strong>YENİ KULLANICI</strong> oluşturun.</p>
+        </div>
       </div>
 
       <div className="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
@@ -90,6 +102,7 @@ export default function UserManagement() {
                 <th className="pb-4 border-b border-gray-100">İsim</th>
                 <th className="pb-4 border-b border-gray-100">Kullanıcı Adı / E-Posta</th>
                 <th className="pb-4 border-b border-gray-100">Yetki</th>
+                <th className="pb-4 border-b border-gray-100 text-right">İşlemler</th>
               </tr>
             </thead>
             <tbody className="text-sm font-medium">
@@ -98,7 +111,7 @@ export default function UserManagement() {
               ) : users.length === 0 ? (
                 <tr><td colSpan={3} className="py-8 text-center text-gray-400 italic">Kayıtlı kullanıcı yok.</td></tr>
               ) : (
-                users.map(u => (
+                users.filter(u => u.role !== 'deleted').map(u => (
                   <tr key={u.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                     <td className="py-4 font-bold text-gray-900">{u.name || 'İsimsiz'}</td>
                     <td className="py-4 text-gray-500">{(u as any).username || u.email || u.id}</td>
@@ -106,6 +119,23 @@ export default function UserManagement() {
                       <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${u.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
                         {u.role === 'admin' ? 'YÖNETİCİ' : 'PERSONEL'}
                       </span>
+                    </td>
+                    <td className="py-4 text-right">
+                      <button 
+                        onClick={async () => {
+                          if(window.confirm(`${u.name || 'Bu kullanıcıyı'} silmek istediğinize emin misiniz? Kullanıcı bir daha giriş yapamayacaktır.`)) {
+                            try {
+                              await setDoc(doc(db, 'userRoles', u.id), { ...u, role: 'deleted' });
+                              fetchUsers();
+                            } catch (e) {
+                              alert('Silme işlemi başarısız!');
+                            }
+                          }
+                        }}
+                        className="text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors"
+                      >
+                        SİL
+                      </button>
                     </td>
                   </tr>
                 ))

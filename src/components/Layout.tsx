@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthProvider';
-import { LayoutDashboard, ShoppingCart, Package, LogOut } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Package, LogOut, Users } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export function Layout() {
@@ -14,6 +14,7 @@ export function Layout() {
     { name: 'Satış', path: '/', icon: ShoppingCart, allowedRoles: ['admin', 'staff'] },
     { name: 'Ürünler', path: '/products', icon: Package, allowedRoles: ['admin', 'staff'] },
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, allowedRoles: ['admin'] },
+    { name: 'Kullanıcılar', path: '/users', icon: Users, allowedRoles: ['admin'] },
   ].filter(item => item.allowedRoles.includes(role || ''));
 
   const isActive = (path: string) =>
