@@ -103,6 +103,7 @@ export default function Products() {
   const [lastCategorizedName, setLastCategorizedName] = useState('');
   const [productLink, setProductLink] = useState('');
   const [linkLoading, setLinkLoading] = useState(false);
+  const [linkError, setLinkError] = useState('');
 
   const handleAutoCategorize = async (nameOverride?: string) => {
     const nameToCategorize = typeof nameOverride === 'string' ? nameOverride : formData.name;
@@ -129,6 +130,7 @@ export default function Products() {
   const handleFetchFromLink = async () => {
     if (!productLink) return;
     setLinkLoading(true);
+    setLinkError('');
     try {
       const res = await fetch('/api/extract-url', {
         method: 'POST',
@@ -136,16 +138,26 @@ export default function Products() {
         body: JSON.stringify({ url: productLink })
       });
       const data = await res.json();
+      if (!res.ok) {
+        setLinkError(data.error || 'Bağlantı hatası oluştu.');
+        return;
+      }
       if (data.name) {
         setFormData(prev => ({ ...prev, name: data.name, imageUrl: data.imageUrl || prev.imageUrl }));
         handleAutoCategorize(data.name);
+        setShowUrlInput(false);
+        setProductLink('');
+      } else {
+        setLinkError('Ürün bilgisi alınamadı. Sayfanın erişime açık olduğundan emin olun.');
       }
     } catch (err) {
       console.error(err);
+      setLinkError('Bağlantı kurulamadı. Lütfen tekrar deneyin.');
     } finally {
       setLinkLoading(false);
     }
   };
+
 
   useEffect(() => {
     fetchProducts();
@@ -382,11 +394,29 @@ export default function Products() {
             </div>
             <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
               {!editingProduct && (
-                <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 flex gap-2 items-center">
-                  <input type="url" value={productLink} onChange={e => setProductLink(e.target.value)} placeholder="Ürün linki yapıştırın (Otomatik doldurmak için)" className="flex-1 p-3 rounded-xl border border-blue-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none text-sm bg-white" />
-                  <button type="button" onClick={handleFetchFromLink} disabled={linkLoading || !productLink} className="bg-blue-600 text-white px-4 py-3 rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 whitespace-nowrap">
-                    {linkLoading ? 'Çekiliyor...' : 'Linkten Çek'}
-                  </button>
+                <div className="space-y-2">
+                  <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 flex gap-2 items-center">
+                    <input
+                      type="url"
+                      value={productLink}
+                      onChange={e => { setProductLink(e.target.value); setLinkError(''); }}
+                      placeholder="Ürün linki yapıştırın (Otomatik doldurmak için)"
+                      className="flex-1 p-3 rounded-xl border border-blue-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none text-sm bg-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleFetchFromLink}
+                      disabled={linkLoading || !productLink}
+                      className="bg-blue-600 text-white px-4 py-3 rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 whitespace-nowrap flex items-center gap-1"
+                    >
+                      {linkLoading ? (
+                        <><span className="animate-spin inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full"></span> Çekiliyor...</>
+                      ) : 'Linkten Çek'}
+                    </button>
+                  </div>
+                  {linkError && (
+                    <p className="text-xs text-red-600 font-medium px-1">{linkError}</p>
+                  )}
                 </div>
               )}
               <div>
