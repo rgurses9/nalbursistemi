@@ -12,6 +12,7 @@ import POS from './pages/POS';
 import Products from './pages/Products';
 import Dashboard from './pages/Dashboard';
 import QRPrint from './pages/QRPrint';
+import Labels from './pages/Labels';
 import Users from './pages/Users';
 import ProductDetail from './pages/ProductDetail';
 
@@ -40,6 +41,11 @@ export default function App() {
             <Route path="/users" element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <Users />
+              </ProtectedRoute>
+            } />
+            <Route path="/labels" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <Labels />
               </ProtectedRoute>
             } />
             <Route path="/dashboard" element={

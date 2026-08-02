@@ -40,3 +40,136 @@ input, textarea, [contenteditable], table, td, th {
     font-size: 8px;
   }
 }
+
+@media print {
+  @page {
+    margin: 0;
+    size: 58mm 40mm; /* Standard thermal label size */
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background: white;
+  }
+
+  /* Hide everything else */
+  #root > div > aside,
+  #root > div > div > header,
+  #root > div > div > nav,
+  .hide-on-print {
+    display: none !important;
+  }
+
+  /* Reset main layout constraints for printing */
+  #root, #root > div, main {
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  /* Label Styling */
+  .label-container {
+    width: 58mm;
+    height: 40mm;
+    box-sizing: border-box;
+    padding: 2mm;
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: white;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+
+  .label-header {
+    text-align: center;
+    border-bottom: 1px solid black;
+    margin-bottom: 1mm;
+    padding-bottom: 1mm;
+  }
+
+  .label-brand {
+    font-size: 8pt;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    text-transform: uppercase;
+  }
+
+  .label-content {
+    display: flex;
+    gap: 2mm;
+    flex: 1;
+    align-items: center;
+  }
+
+  .label-qr {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 20mm;
+  }
+
+  .label-sku {
+    font-size: 5pt;
+    font-family: monospace;
+    margin-top: 1mm;
+  }
+
+  .label-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .label-name {
+    font-size: 7pt;
+    font-weight: bold;
+    margin: 0 0 2mm 0;
+    line-height: 1.1;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .label-price-stock {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .label-price {
+    font-size: 10pt;
+    font-weight: 900;
+  }
+
+  .label-stock {
+    font-size: 5pt;
+    color: #333;
+  }
+
+  .label-image {
+    width: 12mm;
+    height: 12mm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .label-image img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    filter: grayscale(100%) contrast(1.2); /* Optimize for thermal */
+  }
+}
+
+.print-only {
+  display: none;
+}
