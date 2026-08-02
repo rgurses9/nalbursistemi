@@ -195,58 +195,56 @@ export default function POS() {
       {/* Left side: Search & Scanner */}
       <div className="md:col-span-8 flex flex-col space-y-4 overflow-hidden">
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex flex-col flex-1">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex gap-2">
-              <form onSubmit={handleManualSearch} className="flex gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input 
-                    type="text" 
-                    value={searchInput}
-                    onChange={e => setSearchInput(e.target.value)}
-                    placeholder="Barkod veya Ürün Adı..." 
-                    className="w-full pl-10 pr-4 py-3 rounded-2xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
-                  />
-                  {searchMatches.length > 0 && (
-                    <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-2xl shadow-xl max-h-60 overflow-auto">
-                      {searchMatches.map(p => (
-                        <button
-                          key={p.id}
-                          type="button"
-                          onClick={() => {
-                            addProductToCart(p.id);
-                            setSearchInput('');
-                            setSearchMatches([]);
-                          }}
-                          className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-50 flex justify-between items-center"
-                        >
-                          <div>
-                            <p className="font-bold text-gray-900">{p.name}</p>
-                            <p className="text-xs text-gray-500 font-mono">{p.sku}</p>
-                          </div>
-                          <span className="font-black text-blue-600">₺{p.price.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <button 
-                  type="submit"
-                  disabled={loading}
-                  className="bg-gray-800 text-white px-6 py-3 rounded-2xl font-bold hover:bg-gray-900 transition-colors disabled:opacity-50"
-                >
-                  Ekle
-                </button>
-              </form>
-              <button 
-                type="button"
-                onClick={scanning ? stopScanner : startScanner}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl flex items-center space-x-2 shadow-lg shadow-blue-200 transition-all font-bold"
+          <div className="flex items-center gap-2 mb-3 w-full">
+            <form onSubmit={handleManualSearch} className="flex gap-2 flex-1 min-w-0">
+              <div className="relative flex-1 min-w-0">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  value={searchInput}
+                  onChange={e => setSearchInput(e.target.value)}
+                  placeholder="Barkod veya Ürün Adı..."
+                  className="w-full pl-10 pr-4 py-3 rounded-2xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                />
+                {searchMatches.length > 0 && (
+                  <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-2xl shadow-xl max-h-60 overflow-auto">
+                    {searchMatches.map(p => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => {
+                          addProductToCart(p.id);
+                          setSearchInput('');
+                          setSearchMatches([]);
+                        }}
+                        className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-50 flex justify-between items-center"
+                      >
+                        <div>
+                          <p className="font-bold text-gray-900">{p.name}</p>
+                          <p className="text-xs text-gray-500 font-mono">{p.sku}</p>
+                        </div>
+                        <span className="font-black text-blue-600">₺{p.price.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="shrink-0 bg-gray-800 text-white px-6 py-3 rounded-2xl font-bold hover:bg-gray-900 transition-colors disabled:opacity-50"
               >
-                <Camera className="w-6 h-6" />
-                <span className="hidden md:inline">{scanning ? 'KAPAT' : 'QR TARA'}</span>
+                Ekle
               </button>
-            </div>
+            </form>
+            <button
+              type="button"
+              onClick={scanning ? stopScanner : startScanner}
+              className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2 shadow-lg shadow-blue-200 transition-all font-bold"
+            >
+              <Camera className="w-5 h-5" />
+              <span>{scanning ? 'KAPAT' : 'QR TARA'}</span>
+            </button>
           </div>
           {error && <p className="text-red-500 mb-4 font-medium">{error}</p>}
           
