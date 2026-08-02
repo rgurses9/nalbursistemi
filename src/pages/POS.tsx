@@ -191,12 +191,11 @@ export default function POS() {
   };
 
   return (
-    <div className="h-full grid grid-cols-1 md:grid-cols-12 gap-6 overflow-hidden">
+    <div className="h-full grid grid-cols-1 md:grid-cols-12 gap-4 overflow-hidden">
       {/* Left side: Search & Scanner */}
-      <div className="md:col-span-8 flex flex-col space-y-6 overflow-hidden">
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-200 flex flex-col flex-1">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold">Satış Sepeti</h2>
+      <div className="md:col-span-8 flex flex-col space-y-4 overflow-hidden">
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex flex-col flex-1">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex gap-2">
               <form onSubmit={handleManualSearch} className="flex gap-2">
                 <div className="relative flex-1">
@@ -331,11 +330,11 @@ export default function POS() {
         </div>
       </div>
 
-      {/* Right side: Placeholders for Dashboard bits if needed or just styling */}
-      <div className="md:col-span-4 flex flex-col space-y-6">
+      {/* Right side */}
+      <div className="md:col-span-4 flex flex-col space-y-4">
          <div className="bg-orange-50 rounded-2xl p-4 border border-orange-100 flex-1 flex flex-col justify-center items-center text-center">
-            <ShoppingCart className="w-16 h-16 opacity-20 text-orange-900 mb-4" />
-            <h4 className="text-orange-900 font-bold text-lg mb-2">Hızlı İşlem</h4>
+            <ShoppingCart className="w-12 h-12 opacity-20 text-orange-900 mb-3" />
+            <h4 className="text-orange-900 font-bold text-base mb-1">Hızlı İşlem</h4>
             <p className="text-sm text-orange-700">QR kod veya barkod okutarak ürünleri hızlıca sepete ekleyebilirsiniz.</p>
          </div>
       </div>

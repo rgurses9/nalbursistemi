@@ -13,7 +13,7 @@ export function Layout() {
   }
 
   const navItems = [
-    { name: 'Satış (POS)', path: '/', icon: ShoppingCart, allowedRoles: ['admin', 'staff'] },
+    { name: 'Satış', path: '/', icon: ShoppingCart, allowedRoles: ['admin', 'staff'] },
     { name: 'Ürünler', path: '/products', icon: Package, allowedRoles: ['admin', 'staff'] },
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, allowedRoles: ['admin'] },
     { name: 'Kullanıcılar', path: '/users', icon: Users, allowedRoles: ['admin'] },
@@ -81,11 +81,7 @@ export function Layout() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col bg-gray-50 overflow-hidden">
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-8 shrink-0">
-          <div className="flex items-center space-x-4">
-            <span className="flex items-center text-gray-500 font-semibold text-sm">
-              {navItems.find(i => i.path === location.pathname || (i.path !== '/' && location.pathname.startsWith(i.path)))?.name || 'Panel'}
-            </span>
-          </div>
+          <div className="flex items-center space-x-4"></div>
           <div className="flex items-center space-x-6">
             <div className="text-right hidden md:block">
               <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Hoş Geldiniz</p>
