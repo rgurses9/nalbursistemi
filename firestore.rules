@@ -1,0 +1,39 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && get(/databases/$(database)/documents/userRoles/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function isStaff() {
+      return isAuthenticated() && (
+        get(/databases/$(database)/documents/userRoles/$(request.auth.uid)).data.role == 'admin' ||
+        get(/databases/$(database)/documents/userRoles/$(request.auth.uid)).data.role == 'staff'
+      );
+    }
+
+    match /products/{productId} {
+      allow read: if true; // Public access for QR codes
+      allow write: if isAdmin();
+      // Allow staff to update stock during sales
+      allow update: if isStaff() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock', 'updatedAt']);
+    }
+
+    match /sales/{saleId} {
+      allow read: if isStaff(); // Staff can see sales? Or maybe just admin. Let's allow staff so they can see recent.
+      allow create: if isStaff();
+      allow update, delete: if isAdmin();
+    }
+    
+    match /userRoles/{userId} {
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow read, write: if isAdmin();
+    }
+  }
+}

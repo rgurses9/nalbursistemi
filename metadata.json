@@ -1,0 +1,10 @@
+{
+  "name": "Nalbur Yönetim Sistemi",
+  "description": "Nalbur dükkanları için tablet uyumlu satış, stok takip, QR kod ve raporlama sistemi.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

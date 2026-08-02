@@ -1,0 +1,66 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "Nalbur product inventory item.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "sku": { "type": "string" },
+        "price": { "type": "number" },
+        "stock": { "type": "number" },
+        "minStockAlert": { "type": "number" },
+        "category": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "sku", "price", "stock", "minStockAlert", "category", "createdAt"]
+    },
+    "Sale": {
+      "title": "Sale",
+      "description": "A completed sale transaction.",
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "productId": { "type": "string" },
+              "name": { "type": "string" },
+              "quantity": { "type": "number" },
+              "price": { "type": "number" }
+            }
+          }
+        },
+        "totalAmount": { "type": "number" },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["items", "totalAmount", "createdBy", "createdAt"]
+    },
+    "UserRole": {
+      "title": "User Role",
+      "description": "Role mapping for users (admin vs staff)",
+      "type": "object",
+      "properties": {
+        "role": { "type": "string", "enum": ["admin", "staff"] }
+      },
+      "required": ["role"]
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "All products in the inventory."
+    },
+    "/sales/{saleId}": {
+      "schema": { "$ref": "#/entities/Sale" },
+      "description": "All sales."
+    },
+    "/userRoles/{userId}": {
+      "schema": { "$ref": "#/entities/UserRole" },
+      "description": "User roles configuration."
+    }
+  }
+}
