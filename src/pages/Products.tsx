@@ -146,11 +146,14 @@ export default function Products() {
     } else {
       setEditingProduct(null);
       setLastCategorizedName('');
-      // Generate EAN-13 style SKU automatically using timestamp + random
+      // Generate sequential SKU starting from 1
       const generateSKU = () => {
-        const timestamp = Date.now().toString().slice(-10);
-        const random = Math.floor(100 + Math.random() * 900).toString();
-        return timestamp + random;
+        const numericSkus = products
+          .map(p => parseInt(p.sku, 10))
+          .filter(n => !isNaN(n));
+        
+        if (numericSkus.length === 0) return '1';
+        return (Math.max(...numericSkus) + 1).toString();
       };
       setFormData({ name: '', sku: generateSKU(), price: '', stock: '', minStockAlert: '', category: '', unit: 'Adet', imageUrl: '' });
     }
