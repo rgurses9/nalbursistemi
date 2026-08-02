@@ -81,14 +81,19 @@ export function Layout() {
       {/* ── MAIN AREA ── */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile top bar */}
-        <header className="md:hidden flex items-center justify-between px-4 h-12 bg-blue-600 shrink-0" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-          <span className="text-white text-sm font-black tracking-tight">DEMİRKIRANLAR</span>
-          <button
-            onClick={logout}
-            className="text-white/80 hover:text-white p-1.5 rounded-lg"
-          >
-            <LogOut className="w-5 h-5" />
-          </button>
+        <header 
+          className="md:hidden bg-blue-600 shrink-0" 
+          style={{ paddingTop: 'env(safe-area-inset-top)' }}
+        >
+          <div className="flex items-center justify-between px-4 h-14">
+            <span className="text-white text-sm font-black tracking-tight">DEMİRKIRANLAR</span>
+            <button
+              onClick={logout}
+              className="text-white/80 hover:text-white p-1.5 rounded-lg"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+          </div>
         </header>
 
         {/* Desktop top bar */}
