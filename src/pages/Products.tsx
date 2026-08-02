@@ -3,8 +3,10 @@ import { collection, query, getDocs, addDoc, updateDoc, deleteDoc, doc, orderBy 
 import { db } from '../lib/firebase';
 import { Product } from '../types';
 import { Plus, Edit2, Trash2, Search, X, Upload, Image as ImageIcon } from 'lucide-react';
+import { useAuth } from '../components/AuthProvider';
 
 export default function Products() {
+  const { role } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -278,21 +280,23 @@ export default function Products() {
     <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h1 className="text-3xl font-bold text-gray-900">Envanter & Ürünler</h1>
-        <div className="flex gap-2">
-          <button 
-            onClick={() => setIsBulkModalOpen(true)}
-            className="bg-purple-100 hover:bg-purple-200 text-purple-700 px-5 py-2.5 rounded-2xl flex items-center gap-2 transition-colors font-bold shadow-sm"
-          >
-            TOPLU GÜNCELLEME
-          </button>
-          <button 
-            onClick={() => handleOpenModal()}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-2xl flex items-center gap-2 transition-colors font-bold shadow-lg shadow-blue-200"
-          >
-            <Plus className="w-5 h-5" />
-            YENİ ÜRÜN EKLE
-          </button>
-        </div>
+        {role === 'admin' && (
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setIsBulkModalOpen(true)}
+              className="bg-purple-100 hover:bg-purple-200 text-purple-700 px-5 py-2.5 rounded-2xl flex items-center gap-2 transition-colors font-bold shadow-sm"
+            >
+              TOPLU GÜNCELLEME
+            </button>
+            <button 
+              onClick={() => handleOpenModal()}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-2xl flex items-center gap-2 transition-colors font-bold shadow-lg shadow-blue-200"
+            >
+              <Plus className="w-5 h-5" />
+              YENİ ÜRÜN EKLE
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
@@ -318,14 +322,14 @@ export default function Products() {
                 <th className="pb-4 border-b border-gray-100">Kategori</th>
                 <th className="pb-4 border-b border-gray-100">Fiyat</th>
                 <th className="pb-4 border-b border-gray-100">Stok</th>
-                <th className="pb-4 border-b border-gray-100 text-right">İşlemler</th>
+                {role === 'admin' && <th className="pb-4 border-b border-gray-100 text-right">İşlemler</th>}
               </tr>
             </thead>
             <tbody className="text-sm font-medium">
               {loading ? (
-                <tr><td colSpan={6} className="py-8 text-center text-gray-400 italic">Yükleniyor...</td></tr>
+                <tr><td colSpan={role === 'admin' ? 6 : 5} className="py-8 text-center text-gray-400 italic">Yükleniyor...</td></tr>
               ) : filteredProducts.length === 0 ? (
-                <tr><td colSpan={6} className="py-8 text-center text-gray-400 italic">Ürün bulunamadı.</td></tr>
+                <tr><td colSpan={role === 'admin' ? 6 : 5} className="py-8 text-center text-gray-400 italic">Ürün bulunamadı.</td></tr>
               ) : (
                 filteredProducts.map(product => (
                   <tr key={product.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
@@ -349,16 +353,18 @@ export default function Products() {
                         {product.stock}
                       </span>
                     </td>
-                    <td className="py-4 text-right">
-                      <div className="flex justify-end gap-2">
-                        <button onClick={() => handleOpenModal(product)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors">
-                          <Edit2 className="w-5 h-5" />
-                        </button>
-                        <button onClick={() => handleDelete(product.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors">
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </td>
+                    {role === 'admin' && (
+                      <td className="py-4 text-right">
+                        <div className="flex justify-end gap-2">
+                          <button onClick={() => handleOpenModal(product)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors">
+                            <Edit2 className="w-5 h-5" />
+                          </button>
+                          <button onClick={() => handleDelete(product.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors">
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))
               )}
