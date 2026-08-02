@@ -94,12 +94,8 @@ export default function Labels() {
           ) : (
             filteredProducts.map(product => (
               <div key={product.id} className="border border-gray-200 rounded-2xl p-4 flex flex-col items-center text-center bg-gray-50/50 hover:bg-white hover:shadow-md transition-all">
-                <div className="w-24 h-24 mb-3 bg-white border border-gray-100 rounded-xl flex items-center justify-center overflow-hidden shrink-0">
-                  {product.imageUrl ? (
-                    <img src={product.imageUrl} alt={product.name} className="w-full h-full object-contain p-2" />
-                  ) : (
-                    <ImageIcon className="w-8 h-8 text-gray-300" />
-                  )}
+                <div className="w-24 h-24 mb-3 bg-white border border-gray-100 rounded-xl flex items-center justify-center p-2 shrink-0">
+                  <QRCodeSVG value={`${window.location.origin}/p/${product.id}`} size={80} level="M" includeMargin={false} />
                 </div>
                 <h3 className="font-bold text-gray-900 text-sm line-clamp-2 mb-1 h-10">{product.name}</h3>
                 <p className="text-blue-600 font-black mb-3">₺{product.price.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</p>
