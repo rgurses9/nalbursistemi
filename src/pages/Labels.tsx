@@ -126,7 +126,7 @@ export default function Labels() {
             
             <div className="label-content">
               <div className="label-qr">
-                <QRCodeSVG value={product.id} size={80} level="M" includeMargin={false} />
+                <QRCodeSVG value={`${window.location.origin}/p/${product.id}`} size={80} level="M" includeMargin={false} />
                 <span className="label-sku">{product.sku}</span>
               </div>
               

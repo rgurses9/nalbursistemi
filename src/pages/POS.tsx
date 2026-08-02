@@ -85,7 +85,14 @@ export default function POS() {
 
   const onScanSuccess = (decodedText: string) => {
     stopScanner(); // Okur okumaz kapat
-    addProductToCart(decodedText); // Sepete ekle
+    
+    // Eğer QR kod bir link ise (kamera okutması için), sondaki ID'yi al
+    let skuOrId = decodedText;
+    if (skuOrId.includes('/p/')) {
+      skuOrId = skuOrId.split('/p/').pop() || skuOrId;
+    }
+    
+    addProductToCart(skuOrId); // Sepete ekle
   };
 
   const handleManualSearch = async (e: React.FormEvent) => {
