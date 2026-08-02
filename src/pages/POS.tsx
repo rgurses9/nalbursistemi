@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { collection, query, where, getDocs, doc, runTransaction, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Product, SaleItem } from '../types';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
 import { Trash2, Search, Plus, Minus, CreditCard, Camera, ShoppingCart } from 'lucide-react';
 import { useAuth } from '../components/AuthProvider';
 
@@ -35,49 +35,57 @@ export default function POS() {
     }
   }, [searchInput, products]);
 
-  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
 
   useEffect(() => {
     return () => {
-      if (scannerRef.current) {
-        scannerRef.current.clear().catch(console.error);
+      if (scannerRef.current && scannerRef.current.isScanning) {
+        scannerRef.current.stop().catch(console.error);
       }
     };
   }, []);
 
-  const startScanner = () => {
+  const startScanner = async () => {
     setScanning(true);
-    setTimeout(() => {
+    setError('');
+    try {
       if (!scannerRef.current) {
-        scannerRef.current = new Html5QrcodeScanner(
-          "reader",
-          { fps: 10, qrbox: { width: 250, height: 250 } },
-          /* verbose= */ false
-        );
-        scannerRef.current.render(onScanSuccess, onScanFailure);
+        scannerRef.current = new Html5Qrcode("reader");
       }
-    }, 100);
-  };
-
-  const stopScanner = () => {
-    if (scannerRef.current) {
-      scannerRef.current.clear().then(() => {
-        setScanning(false);
-        scannerRef.current = null;
-      }).catch(console.error);
-    } else {
+      
+      await scannerRef.current.start(
+        { facingMode: "environment" }, // Arka kamera
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (decodedText) => {
+          // Başarılı okuma
+          onScanSuccess(decodedText);
+        },
+        () => {
+          // Hataları görmezden gel (sürekli tarama yapıyor)
+        }
+      );
+    } catch (err: any) {
+      console.error(err);
+      setError('Kamera başlatılamadı. Lütfen kamera izinlerini kontrol edin.');
       setScanning(false);
     }
   };
 
-  const onScanSuccess = (decodedText: string) => {
-    // Stop scanning and add product
-    stopScanner();
-    addProductToCart(decodedText);
+  const stopScanner = async () => {
+    if (scannerRef.current && scannerRef.current.isScanning) {
+      try {
+        await scannerRef.current.stop();
+        scannerRef.current.clear();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    setScanning(false);
   };
 
-  const onScanFailure = (error: any) => {
-    // ignore
+  const onScanSuccess = (decodedText: string) => {
+    stopScanner(); // Okur okumaz kapat
+    addProductToCart(decodedText); // Sepete ekle
   };
 
   const handleManualSearch = async (e: React.FormEvent) => {
