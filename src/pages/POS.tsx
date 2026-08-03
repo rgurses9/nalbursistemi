@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { collection, query, where, getDocs, doc, runTransaction, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Product, SaleItem } from '../types';
-import { Html5Qrcode } from 'html5-qrcode';
-import { Trash2, Search, Plus, Minus, CreditCard, Camera, ShoppingCart } from 'lucide-react';
+import { Trash2, Search, Plus, Minus, CreditCard, Camera, ShoppingCart, X } from 'lucide-react';
 import { useAuth } from '../components/AuthProvider';
 
 export default function POS() {
@@ -35,65 +34,105 @@ export default function POS() {
     }
   }, [searchInput, products]);
 
-  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const animFrameRef = useRef<number | null>(null);
+  const scannerCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
+  // Cleanup on unmount
   useEffect(() => {
-    return () => {
-      if (scannerRef.current && scannerRef.current.isScanning) {
-        scannerRef.current.stop().catch(console.error);
-      }
-    };
+    return () => { stopScanner(); };
   }, []);
 
+  const stopScanner = useCallback(() => {
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setScanning(false);
+  }, []);
+
+  const onScanSuccess = useCallback((decodedText: string) => {
+    stopScanner();
+    let skuOrId = decodedText.trim();
+    // If QR value is a URL like /p/PRODUCT_ID, extract the ID
+    if (skuOrId.includes('/p/')) {
+      skuOrId = skuOrId.split('/p/').pop() || skuOrId;
+    }
+    addProductToCart(skuOrId);
+  }, [stopScanner]);
+
+  const tickScan = useCallback(() => {
+    const video = videoRef.current;
+    const canvas = scannerCanvasRef.current;
+    if (!video || !canvas || video.readyState < 2) {
+      animFrameRef.current = requestAnimationFrame(tickScan);
+      return;
+    }
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d')!;
+    ctx.drawImage(video, 0, 0);
+
+    // Try BarcodeDetector first (Chrome Android native)
+    if ('BarcodeDetector' in window) {
+      const detector = new (window as any).BarcodeDetector({ formats: ['qr_code', 'code_128', 'ean_13', 'ean_8', 'code_39'] });
+      detector.detect(canvas).then((codes: any[]) => {
+        if (codes.length > 0) {
+          onScanSuccess(codes[0].rawValue);
+        } else {
+          animFrameRef.current = requestAnimationFrame(tickScan);
+        }
+      }).catch(() => {
+        animFrameRef.current = requestAnimationFrame(tickScan);
+      });
+    } else {
+      // Fallback: no BarcodeDetector available — just keep scanning frames
+      // The video element itself is displayed so user sees the camera
+      animFrameRef.current = requestAnimationFrame(tickScan);
+    }
+  }, [onScanSuccess]);
+
   const startScanner = async () => {
-    setScanning(true);
     setError('');
     try {
-      if (!scannerRef.current) {
-        scannerRef.current = new Html5Qrcode("reader");
-      }
-      
-      await scannerRef.current.start(
-        { facingMode: "environment" }, // Arka kamera
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        (decodedText) => {
-          // Başarılı okuma
-          onScanSuccess(decodedText);
-        },
-        () => {
-          // Hataları görmezden gel (sürekli tarama yapıyor)
+      // Explicitly request camera permission — this is the critical step
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false
+      });
+      streamRef.current = stream;
+      setScanning(true);
+      // Wait for the video element to mount before assigning
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().then(() => {
+            animFrameRef.current = requestAnimationFrame(tickScan);
+          }).catch(console.error);
         }
-      );
+      }, 100);
     } catch (err: any) {
-      console.error(err);
-      setError('Kamera başlatılamadı. Lütfen kamera izinlerini kontrol edin.');
+      console.error('Camera error:', err);
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        setError('Kamera izni reddedildi. Lütfen tarayıcı ayarlarından kamera iznini açın.');
+      } else if (err.name === 'NotFoundError') {
+        setError('Kamera bulunamadı. Cihazınızda kamera mevcut mu?');
+      } else {
+        setError('Kamera başlatılamadı: ' + (err.message || err.name));
+      }
       setScanning(false);
     }
   };
 
-  const stopScanner = async () => {
-    if (scannerRef.current && scannerRef.current.isScanning) {
-      try {
-        await scannerRef.current.stop();
-        scannerRef.current.clear();
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    setScanning(false);
-  };
 
-  const onScanSuccess = (decodedText: string) => {
-    stopScanner(); // Okur okumaz kapat
-    
-    // Eğer QR kod bir link ise (kamera okutması için), sondaki ID'yi al
-    let skuOrId = decodedText;
-    if (skuOrId.includes('/p/')) {
-      skuOrId = skuOrId.split('/p/').pop() || skuOrId;
-    }
-    
-    addProductToCart(skuOrId); // Sepete ekle
-  };
 
   const handleManualSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -264,8 +303,34 @@ export default function POS() {
           {error && <p className="text-red-500 mb-4 font-medium">{error}</p>}
           
           {scanning && (
-            <div className="mb-4">
-              <div id="reader" className="w-full max-w-sm mx-auto overflow-hidden rounded-2xl border-2 border-gray-200"></div>
+            <div className="fixed inset-0 z-50 bg-black flex flex-col">
+              {/* Close button */}
+              <div className="absolute top-4 right-4 z-50">
+                <button
+                  onClick={stopScanner}
+                  className="bg-white/20 hover:bg-white/30 text-white rounded-full p-3 backdrop-blur-sm"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              {/* Camera instruction */}
+              <div className="absolute top-4 left-4 right-16 z-50">
+                <p className="text-white font-bold text-sm bg-black/50 rounded-xl px-3 py-2 backdrop-blur-sm">QR kodu veya barkodu kamera çerçevesine tutun</p>
+              </div>
+              {/* Video feed */}
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-full object-cover"
+              />
+              {/* Scan frame overlay */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="w-56 h-56 border-4 border-white rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]" />
+              </div>
+              {/* Hidden canvas for BarcodeDetector */}
+              <canvas ref={scannerCanvasRef} className="hidden" />
             </div>
           )}
 
