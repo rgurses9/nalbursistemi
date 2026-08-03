@@ -127,34 +127,21 @@ export default function Labels() {
 
       {/* --- PRINT ONLY CONTAINER --- */}
       <div className="print-only">
-        {printQueue.map((product, index) => (
-          <div key={`${product.id}-${index}`} className="label-container">
-            <div className="label-header">
-              <span className="label-brand">DEMİRKIRANLAR</span>
-            </div>
-            
-            <div className="label-content">
+        <div className="label-grid">
+          {printQueue.map((product, index) => (
+            <div key={`${product.id}-${index}`} className="label-container">
               <div className="label-qr">
-                <QRCodeSVG value={`${window.location.origin}/p/${product.id}`} size={80} level="M" includeMargin={false} />
-                <span className="label-sku">{product.sku}</span>
+                <QRCodeSVG
+                  value={`${window.location.origin}/p/${product.id}`}
+                  size={120}
+                  level="M"
+                  includeMargin={false}
+                />
               </div>
-              
-              <div className="label-info">
-                <h2 className="label-name">{product.name}</h2>
-                <div className="label-price-stock">
-                  <span className="label-price">₺{product.price.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</span>
-                  <span className="label-stock">Stok: {product.stock} {product.unit || 'Adet'}</span>
-                </div>
-              </div>
-
-              {product.imageUrl && (
-                 <div className="label-image">
-                    <img src={product.imageUrl} alt="Ürün" />
-                 </div>
-              )}
+              <p className="label-name">{product.name}</p>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </>
   );
