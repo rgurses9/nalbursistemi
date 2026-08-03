@@ -4,6 +4,8 @@ import { db } from '../lib/firebase';
 import { Product, SaleItem } from '../types';
 import { Trash2, Search, Plus, Minus, CreditCard, Camera, ShoppingCart, X } from 'lucide-react';
 import { useAuth } from '../components/AuthProvider';
+import jsQR from 'jsqr';
+import { getProducts, invalidateSales } from '../lib/cache';
 
 export default function POS() {
   const { user } = useAuth();
@@ -16,11 +18,7 @@ export default function POS() {
   const [searchMatches, setSearchMatches] = useState<Product[]>([]);
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      const snap = await getDocs(collection(db, 'products'));
-      setProducts(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Product[]);
-    };
-    fetchProducts();
+    getProducts().then(data => setProducts(data));
   }, []);
 
   useEffect(() => {
@@ -81,7 +79,7 @@ export default function POS() {
     const ctx = canvas.getContext('2d')!;
     ctx.drawImage(video, 0, 0);
 
-    // Try BarcodeDetector first (Chrome Android native)
+    // Try BarcodeDetector first (Chrome Android native, fastest)
     if ('BarcodeDetector' in window) {
       const detector = new (window as any).BarcodeDetector({ formats: ['qr_code', 'code_128', 'ean_13', 'ean_8', 'code_39'] });
       detector.detect(canvas).then((codes: any[]) => {
@@ -91,12 +89,24 @@ export default function POS() {
           animFrameRef.current = requestAnimationFrame(tickScan);
         }
       }).catch(() => {
-        animFrameRef.current = requestAnimationFrame(tickScan);
+        // BarcodeDetector failed — fall through to jsQR
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+        if (code) {
+          onScanSuccess(code.data);
+        } else {
+          animFrameRef.current = requestAnimationFrame(tickScan);
+        }
       });
     } else {
-      // Fallback: no BarcodeDetector available — just keep scanning frames
-      // The video element itself is displayed so user sees the camera
-      animFrameRef.current = requestAnimationFrame(tickScan);
+      // iOS Safari / Firefox: use jsQR (pure JS, works everywhere)
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+      if (code) {
+        onScanSuccess(code.data);
+      } else {
+        animFrameRef.current = requestAnimationFrame(tickScan);
+      }
     }
   }, [onScanSuccess]);
 
@@ -235,7 +245,11 @@ export default function POS() {
       });
 
       setCart([]);
+      // Invalidate caches so Dashboard and Products show fresh data
+      invalidateSales();
+      invalidateProducts();
       alert("Satış başarıyla tamamlandı!");
+
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Satış işlemi başarısız oldu.');

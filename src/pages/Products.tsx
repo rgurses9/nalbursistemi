@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { collection, query, getDocs, addDoc, updateDoc, deleteDoc, doc, orderBy } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Product } from '../types';
 import { Plus, Edit2, Trash2, Search, X, Upload, Image as ImageIcon } from 'lucide-react';
 import { useAuth } from '../components/AuthProvider';
+import { getProducts, setProductsCache, invalidateProducts } from '../lib/cache';
+
+const Sk = ({ w = 'w-full', h = 'h-4' }: { w?: string; h?: string }) => (
+  <div className={`${w} ${h} bg-gray-200 rounded-xl animate-pulse`} />
+);
 
 export default function Products() {
   const { role } = useAuth();
@@ -87,12 +92,11 @@ export default function Products() {
     }
   };
 
-  const fetchProducts = async () => {
-    setLoading(true);
+  const fetchProducts = async (force = false) => {
+    if (!force) setLoading(true);
     try {
-      const q = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
-      const snapshot = await getDocs(q);
-      setProducts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Product[]);
+      const data = await getProducts(force);
+      setProducts(data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -189,14 +193,21 @@ export default function Products() {
     try {
       if (editingProduct) {
         await updateDoc(doc(db, 'products', editingProduct.id), productData);
+        // Optimistic cache update
+        const updated = products.map(p => p.id === editingProduct.id ? { ...p, ...productData } : p);
+        setProducts(updated);
+        setProductsCache(updated);
       } else {
-        await addDoc(collection(db, 'products'), {
+        const ref = await addDoc(collection(db, 'products'), {
           ...productData,
           createdAt: new Date().toISOString()
         });
+        const newProduct = { id: ref.id, ...productData, createdAt: new Date().toISOString() } as Product;
+        const updated = [...products, newProduct];
+        setProducts(updated);
+        setProductsCache(updated);
       }
       handleCloseModal();
-      fetchProducts();
     } catch (err) {
       console.error(err);
       alert('İşlem başarısız oldu.');
@@ -207,7 +218,9 @@ export default function Products() {
     if (window.confirm('Bu ürünü silmek istediğinize emin misiniz?')) {
       try {
         await deleteDoc(doc(db, 'products', id));
-        fetchProducts();
+        const updated = products.filter(p => p.id !== id);
+        setProducts(updated);
+        setProductsCache(updated);
       } catch (err) {
         console.error(err);
       }
@@ -242,7 +255,9 @@ export default function Products() {
       }
       
       setIsBulkModalOpen(false);
-      fetchProducts();
+      // Refresh from server after bulk update
+      invalidateProducts();
+      await fetchProducts(true);
       alert('Toplu fiyat güncellemesi tamamlandı.');
     } catch (err) {
       console.error(err);
@@ -255,6 +270,27 @@ export default function Products() {
   const filteredProducts = products.filter(p => 
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     p.sku.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) return (
+    <div className="space-y-6 max-w-7xl mx-auto">
+      <div className="flex justify-between items-center">
+        <Sk w="w-48" h="h-9" />
+        <Sk w="w-40" h="h-10" />
+      </div>
+      <div className="bg-white rounded-3xl border border-gray-100 p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className="rounded-2xl border border-gray-100 p-4 space-y-3">
+              <Sk h="h-32" />
+              <Sk w="w-3/4" h="h-4" />
+              <Sk w="w-1/2" h="h-3" />
+              <Sk h="h-8" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 
   return (
