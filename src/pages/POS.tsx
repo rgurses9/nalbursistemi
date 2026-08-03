@@ -245,177 +245,161 @@ export default function POS() {
   };
 
   return (
-    <div className="h-full grid grid-cols-1 md:grid-cols-12 gap-4 overflow-hidden">
-      {/* Left side: Search & Scanner */}
-      <div className="md:col-span-8 flex flex-col space-y-4 overflow-hidden">
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex flex-col flex-1">
-          <div className="flex items-center gap-2 mb-3 w-full">
-            <form onSubmit={handleManualSearch} className="flex gap-2 flex-1 min-w-0">
-              <div className="relative flex-1 min-w-0">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  value={searchInput}
-                  onChange={e => setSearchInput(e.target.value)}
-                  placeholder="Barkod veya Ürün Adı..."
-                  className="w-full pl-10 pr-4 py-3 rounded-2xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
-                />
-                {searchMatches.length > 0 && (
-                  <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-2xl shadow-xl max-h-60 overflow-auto">
-                    {searchMatches.map(p => (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => {
-                          addProductToCart(p.id);
-                          setSearchInput('');
-                          setSearchMatches([]);
-                        }}
-                        className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-50 flex justify-between items-center"
-                      >
-                        <div>
-                          <p className="font-bold text-gray-900">{p.name}</p>
-                          <p className="text-xs text-gray-500 font-mono">{p.sku}</p>
-                        </div>
-                        <span className="font-black text-blue-600">₺{p.price.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="shrink-0 bg-gray-800 text-white px-6 py-3 rounded-2xl font-bold hover:bg-gray-900 transition-colors disabled:opacity-50"
-              >
-                Ekle
-              </button>
-            </form>
+    <div className="h-full flex flex-col gap-4 overflow-hidden">
+
+      {/* Search & QR bar — always visible at top */}
+      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 shrink-0">
+        <div className="flex items-center gap-2 w-full">
+          <form onSubmit={handleManualSearch} className="flex gap-2 flex-1 min-w-0">
+            <div className="relative flex-1 min-w-0">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                value={searchInput}
+                onChange={e => setSearchInput(e.target.value)}
+                placeholder="Barkod veya Ürün Adı..."
+                className="w-full pl-10 pr-4 py-3 rounded-2xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+              />
+              {searchMatches.length > 0 && (
+                <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-2xl shadow-xl max-h-60 overflow-auto">
+                  {searchMatches.map(p => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => {
+                        addProductToCart(p.id);
+                        setSearchInput('');
+                        setSearchMatches([]);
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-50 flex justify-between items-center"
+                    >
+                      <div>
+                        <p className="font-bold text-gray-900">{p.name}</p>
+                        <p className="text-xs text-gray-500 font-mono">{p.sku}</p>
+                      </div>
+                      <span className="font-black text-blue-600">₺{p.price.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <button
-              type="button"
-              onClick={scanning ? stopScanner : startScanner}
-              className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2 shadow-lg shadow-blue-200 transition-all font-bold"
+              type="submit"
+              disabled={loading}
+              className="shrink-0 bg-gray-800 text-white px-5 py-3 rounded-2xl font-bold hover:bg-gray-900 transition-colors disabled:opacity-50"
             >
-              <Camera className="w-5 h-5" />
-              <span>{scanning ? 'KAPAT' : 'QR TARA'}</span>
+              Ekle
+            </button>
+          </form>
+          <button
+            type="button"
+            onClick={scanning ? stopScanner : startScanner}
+            className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-2xl flex items-center gap-2 shadow-lg shadow-blue-200 transition-all font-bold"
+          >
+            <Camera className="w-5 h-5" />
+            <span className="hidden sm:inline">{scanning ? 'KAPAT' : 'QR TARA'}</span>
+          </button>
+        </div>
+        {error && <p className="text-red-500 mt-3 font-medium text-sm">{error}</p>}
+      </div>
+
+      {/* Fullscreen camera overlay */}
+      {scanning && (
+        <div className="fixed inset-0 z-50 bg-black flex flex-col">
+          <div className="absolute top-4 right-4 z-50">
+            <button onClick={stopScanner} className="bg-white/20 hover:bg-white/30 text-white rounded-full p-3 backdrop-blur-sm">
+              <X className="w-6 h-6" />
             </button>
           </div>
-          {error && <p className="text-red-500 mb-4 font-medium">{error}</p>}
-          
-          {scanning && (
-            <div className="fixed inset-0 z-50 bg-black flex flex-col">
-              {/* Close button */}
-              <div className="absolute top-4 right-4 z-50">
-                <button
-                  onClick={stopScanner}
-                  className="bg-white/20 hover:bg-white/30 text-white rounded-full p-3 backdrop-blur-sm"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-              {/* Camera instruction */}
-              <div className="absolute top-4 left-4 right-16 z-50">
-                <p className="text-white font-bold text-sm bg-black/50 rounded-xl px-3 py-2 backdrop-blur-sm">QR kodu veya barkodu kamera çerçevesine tutun</p>
-              </div>
-              {/* Video feed */}
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full h-full object-cover"
-              />
-              {/* Scan frame overlay */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-56 h-56 border-4 border-white rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]" />
-              </div>
-              {/* Hidden canvas for BarcodeDetector */}
-              <canvas ref={scannerCanvasRef} className="hidden" />
-            </div>
-          )}
+          <div className="absolute top-4 left-4 right-16 z-50">
+            <p className="text-white font-bold text-sm bg-black/50 rounded-xl px-3 py-2 backdrop-blur-sm">QR kodu veya barkodu kamera çerçevesine tutun</p>
+          </div>
+          <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="w-56 h-56 border-4 border-white rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]" />
+          </div>
+          <canvas ref={scannerCanvasRef} className="hidden" />
+        </div>
+      )}
 
-          <div className="flex-1 overflow-auto border-y border-gray-100 py-4">
-            <table className="w-full text-left border-collapse">
-              <thead className="text-xs text-gray-400 uppercase">
+      {/* Cart — scrollable middle section */}
+      <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col min-h-0">
+        <div className="overflow-auto flex-1 px-4">
+          <table className="w-full text-left border-collapse">
+            <thead className="text-xs text-gray-400 uppercase sticky top-0 bg-white">
+              <tr>
+                <th className="py-3">Ürün Adı</th>
+                <th className="py-3">Adet</th>
+                <th className="py-3 hidden sm:table-cell">Birim</th>
+                <th className="py-3 text-right">Toplam</th>
+                <th className="py-3"></th>
+              </tr>
+            </thead>
+            <tbody className="text-base font-medium">
+              {cart.length === 0 ? (
                 <tr>
-                  <th className="pb-4">Ürün Adı</th>
-                  <th className="pb-4">Adet</th>
-                  <th className="pb-4">Birim Fiyat</th>
-                  <th className="pb-4 text-right">Toplam</th>
-                  <th className="pb-4"></th>
+                  <td colSpan={5} className="py-12 text-center text-gray-400 italic">
+                    Satışa başlamak için ürün ekleyin
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="text-lg font-medium">
-                {cart.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="py-12 text-center text-gray-400 italic">
-                      Satışa başlamak için ürün ekleyin
+              ) : (
+                cart.map(item => (
+                  <tr key={item.productId} className="border-b border-gray-50">
+                    <td className="py-3 font-semibold text-gray-900 text-sm leading-tight max-w-[120px]">{item.name}</td>
+                    <td className="py-3">
+                      <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg p-1 w-fit">
+                        <button onClick={() => updateQuantity(item.productId, -1)} className="p-1 hover:bg-white rounded"><Minus className="w-3 h-3"/></button>
+                        <span className="w-5 text-center text-sm font-bold">x{item.quantity}</span>
+                        <button onClick={() => updateQuantity(item.productId, 1)} className="p-1 hover:bg-white rounded"><Plus className="w-3 h-3"/></button>
+                      </div>
+                    </td>
+                    <td className="py-3 text-sm hidden sm:table-cell">₺{item.price.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
+                    <td className="py-3 text-right font-bold text-gray-900 text-sm">₺{(item.price * item.quantity).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
+                    <td className="py-3 text-right">
+                      <button onClick={() => removeItem(item.productId)} className="text-red-400 hover:text-red-600 p-1">
+                        <Trash2 className="w-4 h-4"/>
+                      </button>
                     </td>
                   </tr>
-                ) : (
-                  cart.map(item => (
-                    <tr key={item.productId} className="border-b border-gray-50">
-                      <td className="py-4 font-semibold text-gray-900">{item.name}</td>
-                      <td className="py-4 text-gray-500 font-mono">
-                        <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg p-1 w-fit">
-                          <button onClick={() => updateQuantity(item.productId, -1)} className="p-1 hover:bg-white rounded"><Minus className="w-4 h-4"/></button>
-                          <span className="w-6 text-center text-sm">x{item.quantity}</span>
-                          <button onClick={() => updateQuantity(item.productId, 1)} className="p-1 hover:bg-white rounded"><Plus className="w-4 h-4"/></button>
-                        </div>
-                      </td>
-                      <td className="py-4">₺{item.price.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                      <td className="py-4 text-right font-bold text-gray-900">₺{(item.price * item.quantity).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</td>
-                      <td className="py-4 text-right">
-                        <button onClick={() => removeItem(item.productId)} className="text-red-400 hover:text-red-600 p-2">
-                          <Trash2 className="w-5 h-5"/>
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="pt-6 flex justify-between items-end">
-            <div>
-              <p className="text-gray-500">Toplam Ürün: {cart.reduce((sum, item) => sum + item.quantity, 0)}</p>
-              <p className="text-sm text-blue-600 font-medium mt-1">✓ Stoklar otomatik düşürülecektir.</p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm text-gray-400 uppercase font-bold tracking-wider">GENEL TOPLAM</p>
-              <p className="text-5xl font-black text-gray-900 mt-1">₺{totalAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</p>
-              <div className="flex gap-4 mt-6">
-                <button 
-                  onClick={() => handleCheckout('cash')}
-                  disabled={cart.length === 0 || loading}
-                  className="flex-1 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:shadow-none text-white py-4 rounded-2xl text-lg font-black shadow-xl shadow-green-100 transition-all flex items-center justify-center gap-2"
-                >
-                  <CreditCard className="w-6 h-6" />
-                  NAKİT
-                </button>
-                <button 
-                  onClick={() => handleCheckout('credit')}
-                  disabled={cart.length === 0 || loading}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:shadow-none text-white py-4 rounded-2xl text-lg font-black shadow-xl shadow-blue-200 transition-all flex items-center justify-center gap-2"
-                >
-                  <CreditCard className="w-6 h-6" />
-                  KART
-                </button>
-              </div>
-            </div>
-          </div>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
-      {/* Right side */}
-      <div className="md:col-span-4 flex flex-col space-y-4">
-         <div className="bg-orange-50 rounded-2xl p-4 border border-orange-100 flex-1 flex flex-col justify-center items-center text-center">
-            <ShoppingCart className="w-12 h-12 opacity-20 text-orange-900 mb-3" />
-            <h4 className="text-orange-900 font-bold text-base mb-1">Hızlı İşlem</h4>
-            <p className="text-sm text-orange-700">QR kod veya barkod okutarak ürünleri hızlıca sepete ekleyebilirsiniz.</p>
-         </div>
+      {/* Total + Payment buttons — ALWAYS visible at bottom, never pushed off screen */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 shrink-0">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <p className="text-gray-500 text-sm">Toplam Ürün: {cart.reduce((sum, item) => sum + item.quantity, 0)}</p>
+            <p className="text-xs text-blue-600 font-medium mt-0.5">✓ Stoklar otomatik düşürülecektir.</p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">GENEL TOPLAM</p>
+            <p className="text-3xl font-black text-gray-900">₺{totalAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</p>
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={() => handleCheckout('cash')}
+            disabled={cart.length === 0 || loading}
+            className="flex-1 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:shadow-none text-white py-4 rounded-2xl text-base font-black shadow-lg shadow-green-100 transition-all flex items-center justify-center gap-2"
+          >
+            <CreditCard className="w-5 h-5" />
+            NAKİT
+          </button>
+          <button
+            onClick={() => handleCheckout('credit')}
+            disabled={cart.length === 0 || loading}
+            className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:shadow-none text-white py-4 rounded-2xl text-base font-black shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-2"
+          >
+            <CreditCard className="w-5 h-5" />
+            KART
+          </button>
+        </div>
       </div>
+
     </div>
   );
 }
