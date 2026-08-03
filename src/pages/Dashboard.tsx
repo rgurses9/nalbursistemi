@@ -6,7 +6,7 @@ import { getProducts, getSales, setSalesCache } from '../lib/cache';
 import { format, isToday, isThisMonth, parseISO } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Download, Trash2, ShoppingBag, Clock, CreditCard, Banknote, ChevronDown, ChevronUp } from 'lucide-react';
+import { Download, Trash2, ShoppingBag, Clock, CreditCard, Banknote, ChevronDown, ChevronUp, User } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useAuth } from '../components/AuthProvider';
 
@@ -225,7 +225,7 @@ export default function Dashboard() {
                       }
                     </div>
 
-                    {/* Date + time */}
+                    {/* Date + time + staff */}
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-bold text-gray-900 text-sm">
@@ -240,6 +240,13 @@ export default function Dashboard() {
                         <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isCash ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
                           {isCash ? 'Nakit' : 'Kredi Kartı'}
                         </span>
+                        {/* Staff badge */}
+                        {sale.createdByName && (
+                          <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                            <User className="w-3 h-3" />
+                            {sale.createdByName}
+                          </span>
+                        )}
                       </div>
                       {/* Product summary */}
                       <p className="text-xs text-gray-400 mt-0.5 truncate">
@@ -279,6 +286,22 @@ export default function Dashboard() {
                   {isExpanded && (
                     <div className="px-6 pb-4">
                       <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
+                        {/* Staff info */}
+                        {(sale.createdByName || sale.createdByEmail) && (
+                          <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
+                            <div className="w-7 h-7 bg-indigo-100 rounded-xl flex items-center justify-center shrink-0">
+                              <User className="w-4 h-4 text-indigo-600" />
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-400 font-medium">Personel</p>
+                              <p className="text-sm font-bold text-gray-800">{sale.createdByName || '—'}</p>
+                              {sale.createdByEmail && (
+                                <p className="text-xs text-gray-400">{sale.createdByEmail}</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
                         <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Satılan Ürünler</p>
                         <div className="space-y-2">
                           {sale.items.map((item, idx) => (

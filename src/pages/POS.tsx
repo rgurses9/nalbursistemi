@@ -240,6 +240,8 @@ export default function POS() {
           totalAmount,
           paymentMethod: method,
           createdBy: user?.uid,
+          createdByEmail: user?.email ?? '',
+          createdByName: user?.displayName || user?.email?.split('@')[0] || 'Bilinmiyor',
           createdAt: new Date().toISOString()
         });
       });

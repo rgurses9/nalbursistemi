@@ -25,6 +25,8 @@ export interface Sale {
   totalAmount: number;
   paymentMethod: 'cash' | 'credit';
   createdBy: string;
+  createdByName?: string;
+  createdByEmail?: string;
   createdAt: string;
 }
 
